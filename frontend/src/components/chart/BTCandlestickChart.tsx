@@ -209,7 +209,7 @@ const ProCandlestickChart = ({
   const channelRef = useRef<any>(null);
   const onStatsRef = useRef(onStats);
   const backtestDataLoadedRef = useRef(false);
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoadRef = useRef(true);
 
   // Chart colors come from ChartSettingsContext, re-renders automatically
@@ -2057,10 +2057,13 @@ const ProCandlestickChart = ({
         axisLine: bgIsLight ? '#999999' : (customColors.axisLineColor || '#666666'),
       };
     }
-    // Otherwise, read from ChartSettingsContext (was localStorage, now context-backed)
+    // Otherwise, read from ChartSettingsContext (was localStorage, now context-backed).
+    // candles/chart come from mergeWithDefaults, so both are always fully
+    // populated: the old `|| {}` fallbacks widened the type to {} and blanked
+    // every colour property below it for the type checker.
     if (savedChartSettings) {
-      const cs = savedChartSettings.candles || {};
-      const ch = savedChartSettings.chart || {};
+      const cs = savedChartSettings.candles;
+      const ch = savedChartSettings.chart;
       const savedBg = ch.backgroundColor || (isDark ? '#000000' : '#ffffff');
       // Derive text color from actual background, same logic as customColors path above
       const savedBgIsLight = isLightBackground(savedBg);

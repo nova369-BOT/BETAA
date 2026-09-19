@@ -105,6 +105,17 @@ print(f"lset-server.spec: {_stdlib_added} standard-library modules added as hidd
 hiddenimports += collect_submodules('uvicorn')
 hiddenimports += collect_submodules('pyarrow')
 hiddenimports += collect_submodules('openpyxl')
+# orjson renders every API response when the wheel is present (the engine
+# falls back to the stdlib encoder when it is absent, so a platform without
+# a wheel still runs). It is a compiled extension imported under a try/
+# except in engine/server.py, so name it explicitly rather than trusting
+# the analysis to see through the guard. Guarded like the stdlib sweep
+# above: a build venv without the wheel must still produce a working app.
+try:
+    tmp_ret = collect_all('orjson')
+    datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+except Exception as _e:  # noqa: BLE001
+    print(f"lset-server.spec: orjson not collected ({_e}); stdlib JSON encoder will be used")
 # pip is bundled so the frozen app can install the optional ML libraries
 # it does not ship. cli.py intercepts `-m pip` and redirects it to a
 # user-writable directory; without pip in here the ML tab's install

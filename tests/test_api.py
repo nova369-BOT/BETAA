@@ -5,14 +5,8 @@ from fastapi.testclient import TestClient
 
 from lse_terminal.engine.server import create_app
 
-
-@pytest.fixture()
-def client(tmp_path, monkeypatch):
-    # Point config at a sandbox and hide any real key so `lse` shows
-    # unconfigured; tests must never touch the developer's real config.
-    monkeypatch.setenv("LSE_TERMINAL_CONFIG_DIR", str(tmp_path))
-    monkeypatch.delenv("LSE_API_KEY", raising=False)
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+# `client` (the sandboxed engine fixture) lives in conftest.py now; the
+# hosted-mode tests below still build the app themselves.
 
 
 def test_health(client):

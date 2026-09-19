@@ -81,6 +81,44 @@ python -m venv .venv
 installers are built with `desktop/build-mac.sh` and
 `desktop/build-win.ps1`. Tests: `.venv/bin/python -m pytest tests/`
 
+## Run it online
+
+There is a Dockerfile and a Render blueprint for hosting the terminal as a
+web service:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/nova369-BOT/BETAA)
+
+**Read the mode note before expecting the full IDE.** The terminal is
+local-first by design: it runs on your own machine, where the engine can
+write files, execute your Python and hold your broker login. A public host
+has none of those privileges over its visitors, so the deployed instance runs
+in the engine's own HOSTED mode (`LSE_TERMINAL_HOSTED=1`) and refuses exactly
+the endpoints that would hand an anonymous visitor a shell on the server.
+
+| Available online | Refused online |
+| --- | --- |
+| Charts and indicators | Backtests and the strategy IDE |
+| The full catalog and symbol search | The workspace file tree |
+| Watchlist, screener, economic calendar | Terminal / PTY sessions |
+| Live streaming quotes | Broker connections and trading |
+
+That split is enforced in `lse_terminal/engine/server.py` and pinned by the
+hosted-mode tests in `tests/test_api.py`; it is the app's security boundary,
+not a deployment limitation to work around. For the whole terminal, use the
+desktop app.
+
+Locally, in Docker:
+
+```
+docker build -t lse-terminal .
+docker run --rm -p 10000:10000 lse-terminal
+# -> http://127.0.0.1:10000
+```
+
+`LSE_API_KEY` is optional. With no key the terminal still runs on its bundled
+demo provider and sample datasets, so a fresh deploy shows a working chart
+immediately.
+
 ## Files
 
 `~/.config/lse-terminal/` has the key, imported data, workspace, indicators,

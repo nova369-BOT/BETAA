@@ -1,0 +1,51 @@
+# ============================================================================
+# Render Blueprint - https://render.com/docs/blueprint-spec
+#
+# One-click deploy:
+#   https://render.com/deploy?repo=https://github.com/nova369-BOT/BETAA
+#
+# READ THIS BEFORE EXPECTING THE FULL IDE ONLINE. The terminal is a
+# local-first app: it is built to run on the user's own machine, where the
+# engine can write files, run their Python and hold their broker login. A
+# public host has none of those privileges over its visitors, so the engine
+# runs in its own HOSTED mode (LSE_TERMINAL_HOSTED=1) and refuses exactly the
+# endpoints that would hand an anonymous visitor a shell on the server:
+#
+#   available   charts, indicators, the full catalog, watchlist, screener,
+#               economic calendar, live streaming quotes
+#   refused     backtests and the strategy IDE, the workspace file tree,
+#               terminal/PTY sessions, broker connections, pip installs
+#
+# That refusal is the app's deliberate design (see the hosted policy in
+# lse_terminal/engine/server.py and the tests that pin it in
+# tests/test_api.py), not a deployment limitation to work around. For the
+# whole terminal, install the desktop app.
+# ============================================================================
+
+services:
+  - type: web
+    name: lse-terminal
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Free instances sleep after ~15 minutes idle and cold-start in under a
+    # minute. A live demo that must never sleep wants `starter`.
+    plan: free
+    # Frankfurt is the closest Render region to most of Europe, the Middle
+    # East and Africa. Change to oregon/ohio/virginia/singapore to move it.
+    region: frankfurt
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Restated here as well as in the Dockerfile's ENV: this single variable
+      # is what keeps a shared deployment from offering a remote shell to
+      # anonymous visitors, so it must not be removable by an image change
+      # alone without the blueprint disagreeing.
+      - key: LSE_TERMINAL_HOSTED
+        value: "1"
+      # The market-data key, from https://londonstrategicedge.com/data.
+      # `sync: false` tells Render to PROMPT for this on first deploy rather
+      # than storing a placeholder in the repo. Optional: with no key the
+      # terminal still runs on its bundled demo provider and sample datasets,
+      # so the deploy succeeds and shows a working chart either way.
+      - key: LSE_API_KEY
+        sync: false

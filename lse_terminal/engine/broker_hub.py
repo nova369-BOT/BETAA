@@ -177,6 +177,16 @@ def builtin_brokers(base: Path) -> dict:
             "cmd": [py, str(base / "adapters" / "paper" / "paper_adapter.py"),
                     "--tick-ms", "200", "--warmup-bars", "30"],
         },
+        # paper's accelerated-clock twin: the SAME adapter, ticking every
+        # 20 ms (100x market time), for tests and fast rehearsals. It is a
+        # builtin, not a registry profile, so it exists on a fresh install
+        # before the user has linked anything. The picker hides it (app.js):
+        # it is machinery, not a venue anyone connects.
+        "paper-fast": {
+            "label": "paper sim, 20ms ticks",
+            "cmd": [py, str(base / "adapters" / "paper" / "paper_adapter.py"),
+                    "--tick-ms", "20", "--warmup-bars", "30"],
+        },
         "novafx": {
             "label": "NovaFX (fictional demo broker)",
             "cmd": [py, str(base / "adapters" / "novafx" / "novafx_adapter.py"),
