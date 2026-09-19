@@ -2,7 +2,7 @@
 
 from lse_terminal.contracts.types import CANDLE_COLUMNS, Instrument, Quote
 from lse_terminal.contracts.provider import NotSupported, Provider
-from lse_terminal.contracts.indicator import IndicatorSpec, all_specs, compute, indicator
+from lse_terminal.contracts.indicator import REGISTRY, IndicatorSpec, all_specs, compute, indicator
 
 __all__ = [
     "CANDLE_COLUMNS",
@@ -14,4 +14,5 @@ __all__ = [
     "indicator",
     "compute",
     "all_specs",
+    "REGISTRY",
 ]

@@ -107,7 +107,7 @@ const CandlestickChart = ({
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState<string>("");
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onStatsRef = useRef(onStats);
 
   // Use the symbol table map hook for correct table name resolution
@@ -349,20 +349,31 @@ const CandlestickChart = ({
 
       const pageSize = 1000;
       let all: any[] = [];
+      // The local engine has no offset, so pages walk BACKWARDS by timestamp:
+      // each request bounds its end at the oldest row seen so far and drops
+      // the engine's inclusive boundary row, keeping the pages disjoint.
+      // (Offset paging against it returned the same newest page on every
+      // iteration, silently concatenating up to 50k duplicate rows.)
+      let endBefore: string | undefined;
 
       // Fetch only what's needed to render ~1000 bars for the selected timeframe
       const maxIterations = Math.ceil(requiredCandles / pageSize);
       for (let i = 0; i < maxIterations; i++) {
         const data = await api.getCandlesRange(tableName, {
-          offset: i * pageSize,
           limit: pageSize,
           order: 'desc',
-          select: 'timestamp,open,high,low,close'
+          select: 'timestamp,open,high,low,close',
+          ...(endBefore ? { end: endBefore } : {}),
         });
 
         if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < pageSize) break;
+        const rows = endBefore
+          ? data.filter((r: any) => r.timestamp < endBefore)
+          : data;
+        if (rows.length === 0) break;
+        all = all.concat(rows);
+        endBefore = rows[rows.length - 1].timestamp;
+        if (rows.length < pageSize - 1) break;
 
         // Safety limit
         if (all.length >= 50000) break;

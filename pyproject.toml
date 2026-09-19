@@ -32,6 +32,10 @@ dependencies = [
     "websockets>=11.0",
     "pandas>=1.5",
     "numpy>=1.24",
+    # Fast JSON serializer for every API response (~8x the stdlib on the
+    # candle payloads). Optional at runtime: the engine falls back to the
+    # stdlib encoder when the wheel is absent.
+    "orjson>=3.9",
     "python-multipart>=0.0.9",
     "pyarrow>=15",
     # Windows ConPTY for the AI panel's terminal view (POSIX uses stdlib pty)

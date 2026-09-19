@@ -24,6 +24,7 @@ export interface AuthValue {
   user: LocalUser | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 }
 
 // A single frozen object so identity is stable across renders. Several ported
@@ -41,6 +42,12 @@ const VALUE: AuthValue = Object.freeze({
   // No-op: there is no session to end. Components that render a sign-out
   // control still call this, so it must resolve rather than throw.
   signOut: async () => {},
+  // No-op resolve: the local identity above is ALWAYS signed in, so a
+  // "sign in" request is already satisfied. Destructuring a method the
+  // context did not define used to throw "signInWithGoogle is not a
+  // function" inside LoginModal, which surfaced as a spurious "Sign in
+  // failed" toast. Resolving lets the modal proceed to its return path.
+  signInWithGoogle: async () => {},
 });
 
 export function useAuth(): AuthValue {

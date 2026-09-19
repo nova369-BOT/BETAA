@@ -20,6 +20,30 @@
 
 import { fetchLocalCandles } from './localEngine';
 
+// One row of api.smartSearch: the setup dialog's symbol picker renders these.
+// Ranking fields mirror the upstream server shape; locally they are neutral
+// because the engine serves the provider's universe unranked.
+export interface SmartSearchResult {
+  symbol: string;
+  display_name: string;
+  category: string;
+  popularity_rank: number | null;
+  popular_dropdown: boolean;
+  search_boosted: boolean;
+}
+
+// The options price-distribution snapshot the right toolbar's Options PDF
+// panel renders. Null when the source has nothing for the underlying.
+export interface OptionsPredictedPrice {
+  display_name?: string;
+  current_price: number;
+  mode_price: number;
+  direction?: string;
+  distance_pct?: number;
+  prob_above?: number;
+  fetch_timestamp?: string | number;
+}
+
 // Sections mirror the allowlist in engine/workspace.py.
 type Section =
   | 'settings' | 'settings_templates' | 'drawing_shortcuts' | 'watchlist'
@@ -186,9 +210,15 @@ export const api = {
   },
 
   // ── candle history ───────────────────────────────────────────────────────
+  // `select` is accepted for compatibility with the upstream callers (a
+  // column-projection hint); the local engine always returns full rows, so it
+  // is honoured by being harmless. start/end window the engine query.
   async getCandlesRange(
     tableName: string,
-    options: { limit?: number; order?: 'asc' | 'desc' } = {}
+    options: {
+      limit?: number; order?: 'asc' | 'desc'; select?: string;
+      start?: string; end?: string;
+    } = {}
   ) {
     return fetchLocalCandles(tableName, options);
   },
@@ -338,7 +368,7 @@ export const api = {
   // Upstream this is a server-ranked RPC over the master symbol registry.
   // Locally the universe is whatever the active provider offers, served by
   // /api/instruments; ranking fields are filled with neutral values.
-  async smartSearch(opts: { q?: string; limit?: number; category?: string; provider?: string } = {}) {
+  async smartSearch(opts: { q?: string; limit?: number; category?: string; provider?: string } = {}): Promise<SmartSearchResult[]> {
     const { getEngineContext } = await import('./localEngine');
     // An explicit provider lets a caller (the manual-backtest source picker)
     // search one source's universe without touching the shell's active chart
@@ -420,7 +450,12 @@ export const api = {
   async getNewsArticles(_options?: Record<string, any>) { return []; },
   async getCotData(_options?: Record<string, any>) { return []; },
   async getSectorSentiment() { return []; },
-  async getOptionsPredictedPrice(_underlying: string) { return []; },
+  // The terminal has no options_predicted_price feed, so the honest answer is
+  // "no data". This used to return an empty ARRAY, which is truthy: the panel
+  // then rendered its data branch and called formatPrice(undefined), throwing
+  // inside OptionsPDFPanel. Null falls through to the "No PDF data available"
+  // state.
+  async getOptionsPredictedPrice(_underlying: string): Promise<OptionsPredictedPrice | null> { return null; },
 };
 
 // Generic local GET helper. Kept because the ported code imports it alongside
