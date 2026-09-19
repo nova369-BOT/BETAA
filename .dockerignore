@@ -1,0 +1,16 @@
+# Build-context trim. The wheel carries the compiled UI, the sample datasets
+# and the bundled Brue indicators, so none of the development trees below are
+# part of the image. Excluding them keeps the context small and the build
+# from invalidating its own cache on an unrelated file change.
+.git
+.github
+.venv
+venv
+.pytest_cache
+__pycache__
+**/__pycache__
+**/*.py[cod]
+frontend
+desktop
+tests
+tools
